@@ -52,6 +52,68 @@ services:
       timeout: 10s
       retries: 3
     
+  # ckanext-harvest workers: gather + fetch consumers, and a loop that starts scheduled
+  # harvest jobs (`harvester run`) every 15 minutes. Same image as ckan.
+  harvester_gather:
+    platform: linux/amd64
+    build:
+      context: ckan/
+      dockerfile: Dockerfile
+      args:
+        - TZ=${TZ}
+    command: /srv/app/start_worker.sh ckan -c /srv/app/ckan.ini harvester gather-consumer
+    networks:
+      - ckannet
+      - dbnet
+      - solrnet
+      - redisnet
+    env_file:
+      - .env
+    depends_on:
+      ckan:
+        condition: service_healthy
+    restart: unless-stopped
+
+  harvester_fetch:
+    platform: linux/amd64
+    build:
+      context: ckan/
+      dockerfile: Dockerfile
+      args:
+        - TZ=${TZ}
+    command: /srv/app/start_worker.sh ckan -c /srv/app/ckan.ini harvester fetch-consumer
+    networks:
+      - ckannet
+      - dbnet
+      - solrnet
+      - redisnet
+    env_file:
+      - .env
+    depends_on:
+      ckan:
+        condition: service_healthy
+    restart: unless-stopped
+
+  harvester_run:
+    platform: linux/amd64
+    build:
+      context: ckan/
+      dockerfile: Dockerfile
+      args:
+        - TZ=${TZ}
+    command: /srv/app/start_worker.sh sh -c 'while true; do ckan -c /srv/app/ckan.ini harvester run; sleep 900; done'
+    networks:
+      - ckannet
+      - dbnet
+      - solrnet
+      - redisnet
+    env_file:
+      - .env
+    depends_on:
+      ckan:
+        condition: service_healthy
+    restart: unless-stopped
+
   datapusher:
     platform: linux/amd64
     networks:

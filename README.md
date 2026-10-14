@@ -27,6 +27,17 @@
   - [Copying and License](#copying-and-license)
 
 
+## Extensions added in this copy
+
+`ckan/Dockerfile` installs (pinned): ckanext-harvest v1.6.3, ckanext-dcat v2.4.4, ckanext-spatial v2.3.2, ckanext-geoview v0.3.2.
+Plugins are enabled in `CKAN__PLUGINS` in `.env`:
+`spatial_metadata spatial_query geo_view geojson_view wmts_view shp_view dcat structured_data harvest ckan_harvester dcat_rdf_harvester csw_harvester waf_harvester doc_harvester`
+
+* **Harvesting** needs the `harvester_gather`, `harvester_fetch` and `harvester_run` services in `docker-compose.yml` (`harvester_run` starts scheduled jobs every 15 minutes). They use `ckan/setup/start_worker.sh`.
+* **Spatial search** (`solr-bbox` backend) needs five float fields in Solr; `ckan/docker-entrypoint.d/02_solr_spatial_fields.py` adds them on start-up if missing.
+* `CKAN___SECRET_KEY` in `.env` is needed by the harvester containers: change `CHANGE_ME` (and the other `CHANGE_ME` values) for anything beyond local testing.
+* The GEMINI-specific harvesters aren't enabled: `gemini_csw_harvester` uses the same `csw` type name as `csw_harvester`. The generic ISO 19139 harvesters handle GEMINI records.
+
 ## 1.  Overview
 
 This is a set of configuration and setup files to run a CKAN site.
